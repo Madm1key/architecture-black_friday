@@ -13,13 +13,13 @@ services:
       [
         "mongos",
         "--configdb",
-        "config_server/config_server:27017",
+        "config_server/config-server:27017",
         "--bind_ip_all",
         "--port",
         "27016"
       ]
     healthcheck:
-      test: [ "CMD", "mongosh", "--eval", "db.adminCommand('ping')" ]
+      test: [ "CMD", "mongosh", "--port", "27016", "--eval", "db.adminCommand('ping')" ]
       interval: 5s
       start_period: 10s
 
@@ -67,7 +67,7 @@ services:
         "27018"
       ]
     healthcheck:
-      test: [ "CMD", "mongosh", "--eval", "db.adminCommand('ping')" ]
+      test: [ "CMD", "mongosh", "--port", "27018", "--eval", "db.adminCommand('ping')" ]
       interval: 5s
       start_period: 10s
 
@@ -91,9 +91,23 @@ services:
         "27019"
       ]
     healthcheck:
-      test: [ "CMD", "mongosh", "--eval", "db.adminCommand('ping')" ]
+      test: [ "CMD", "mongosh", "--port", "27019", "--eval", "db.adminCommand('ping')" ]
       interval: 5s
       start_period: 10s
+
+  cluster-init:
+    container_name: cluster-init
+    image: dh-mirror.gitverse.ru/mongo:8.2.3-noble
+    networks:
+      - app-network
+    volumes:
+      - ./init-cluster.sh:/init-cluster.sh
+    entrypoint: ["/bin/bash", "/init-cluster.sh"]
+    depends_on:
+      - config-server
+      - shard1
+      - shard2
+      - mongos-router
 
   pymongo-api:
     container_name: pymongo-api
@@ -105,7 +119,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      MONGODB_URL: "mongodb://mongos_router:27016"
+      MONGODB_URL: "mongodb://mongos-router:27016"
       MONGODB_DATABASE_NAME: "somedb"
     networks:
       - app-network
