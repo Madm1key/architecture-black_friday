@@ -201,6 +201,18 @@ services:
       - shard2-3
       - mongos-router
 
+  redis-cache:
+    container_name: redis-cache
+    image: redis:8.0.2-alpine
+    restart: always
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   pymongo-api:
     container_name: pymongo-api
     build:
@@ -208,11 +220,13 @@ services:
       dockerfile: Dockerfile
     depends_on:
       - mongos-router
+      - redis-cache
     ports:
       - "8080:8080"
     environment:
       MONGODB_URL: "mongodb://mongos-router:27016"
       MONGODB_DATABASE_NAME: "somedb"
+      REDIS_URL: "redis://redis-cache:6379"
     networks:
       - app-network
 
