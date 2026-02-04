@@ -30,5 +30,4 @@ mongosh --host mongos-router --port 27016 --eval '
     docs.push({age: i, name: "ly" + i});
   }
   db.helloDoc.insertMany(docs);
-  print(db.helloDoc.countDocuments());
 '
